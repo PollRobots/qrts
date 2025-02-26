@@ -1,12 +1,25 @@
 {
   "name": "qrts",
+  "type": "module",
+  "source": "src/qrts.ts",
+  "exports": {
+    "require": "./dist/qrts.cjs",
+    "default": "./dist/qrts.modern.js"
+  },
+  "main": "./dist/qrts.cjs",
+  "module": "./dist/qrts.module.js",
+  "unpkg": "./dist/qrts.umd.js",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "microbundle",
+    "dev": "microbundle watch"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "Paul C Roberts",
+  "license": "MIT",
+  "devDependencies": {
+    "microbundle": "^0.15.1",
+    "typescript": "^5.7.3"
+  }
 }
