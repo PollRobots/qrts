@@ -24,7 +24,7 @@ export class QRBitBuffer {
       const byteIndex = (this.length >>> 3) & 0xff;
 
       const block = this.blocks[blockIndex] ?? [];
-      block[byteIndex] = (block[byteIndex] || 0) | (0x80 >>> bitIndex);
+      block[byteIndex] = (block[byteIndex] ?? 0) | (0x80 >>> bitIndex);
     }
 
     this.length++;

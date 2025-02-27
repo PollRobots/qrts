@@ -1,13 +1,13 @@
 /** The error correction level to be used when generating the QR code */
 export enum ErrorCorrectLevel {
   /** Allows correcting up to 7% */
-  Low,
+  Low = 1,
   /** Allows correcting up to 15% */
-  Medium,
+  Medium = 0,
   /** Allows correcting up to 25% */
-  Quartile,
+  Quartile = 3,
   /** Allows correcting up to 30% */
-  High,
+  High = 2,
 }
 
 export type ValidVersion =

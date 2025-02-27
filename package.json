@@ -20,12 +20,14 @@
     "prepublishOnly": "npm run build"
   },
   "files": [
-    "dist",
-    "src",
     "LICENSE",
     "LICENSE-qrcode",
     "LICENSE-qrjs",
-    "README.md"
+    "README.md",
+    "dist",
+    "eslint.config.mjs",
+    "src",
+    "tsconfig.json"
   ],
   "keywords": [
     "qrcode",

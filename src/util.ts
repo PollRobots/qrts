@@ -58,21 +58,23 @@ const PATTERN_POSITION_TABLE = [
 ];
 
 const G15 = 0b101_0011_0111;
+const G15_BCH = 11;
 const G18 = 0b1_1111_0010_0101;
+const G18_BCH = 13;
 const G15_MASK = 0b101_0100_0001_0010;
 
 export function getBCHTypeInfo(data: number) {
   let d = data << 10;
-  while (getBCHDigit(d) - getBCHDigit(G15) >= 0) {
-    d ^= G15 << (getBCHDigit(d) - getBCHDigit(G15));
+  while (getBCHDigit(d) - G15_BCH >= 0) {
+    d ^= G15 << (getBCHDigit(d) - G15_BCH);
   }
   return ((data << 10) | d) ^ G15_MASK;
 }
 
 export function getBCHVersion(data: number) {
   let d = data << 12;
-  while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
-    d ^= G18 << (getBCHDigit(d) - getBCHDigit(G18));
+  while (getBCHDigit(d) - G18_BCH >= 0) {
+    d ^= G18 << (getBCHDigit(d) - G18_BCH);
   }
   return (data << 12) | d;
 }
@@ -88,31 +90,31 @@ export function getBCHDigit(data: number) {
   return digit;
 }
 
-export function getPatternPosition(typeNumber: number): number[] {
-  if (typeNumber <= 0 || typeNumber > PATTERN_POSITION_TABLE.length) {
-    throw new Error(`Invalid type number: ${typeNumber}`);
+export function getPatternPosition(version: number): number[] {
+  if (version <= 0 || version > PATTERN_POSITION_TABLE.length) {
+    throw new Error(`Invalid type number: ${version}`);
   }
-  return PATTERN_POSITION_TABLE[typeNumber - 1] ?? [];
+  return PATTERN_POSITION_TABLE[version - 1] ?? [];
 }
 
 export function getMask(maskPattern: number, i: number, j: number) {
   switch (maskPattern) {
     case QRMaskPattern.PATTERN000:
-      return (i + j) % 2 == 0;
+      return (i + j) % 2 === 0;
     case QRMaskPattern.PATTERN001:
-      return i % 2 == 0;
+      return i % 2 === 0;
     case QRMaskPattern.PATTERN010:
-      return j % 3 == 0;
+      return j % 3 === 0;
     case QRMaskPattern.PATTERN011:
-      return (i + j) % 3 == 0;
+      return (i + j) % 3 === 0;
     case QRMaskPattern.PATTERN100:
-      return (Math.floor(i / 2) + Math.floor(j / 3)) % 2 == 0;
+      return (Math.trunc(i / 2) + Math.trunc(j / 3)) % 2 === 0;
     case QRMaskPattern.PATTERN101:
-      return ((i * j) % 2) + ((i * j) % 3) == 0;
+      return ((i * j) % 2) + ((i * j) % 3) === 0;
     case QRMaskPattern.PATTERN110:
-      return (((i * j) % 2) + ((i * j) % 3)) % 2 == 0;
+      return (((i * j) % 2) + ((i * j) % 3)) % 2 === 0;
     case QRMaskPattern.PATTERN111:
-      return (((i * j) % 3) + ((i + j) % 2)) % 2 == 0;
+      return (((i * j) % 3) + ((i + j) % 2)) % 2 === 0;
 
     default:
       throw new Error("bad maskPattern:" + maskPattern);

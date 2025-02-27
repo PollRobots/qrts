@@ -16,7 +16,7 @@ import { ErrorCorrectLevel } from "./definitions";
 export class QRCodeBuilder {
   private version: number;
   private readonly errorCorrectLevel: ErrorCorrectLevel;
-  private modules: (boolean | null)[][] = [];
+  private readonly modules = new Map<number, boolean>();
   private dataCache: number[] | null = null;
   private dataList: DataBlock[] = [];
 
@@ -26,7 +26,7 @@ export class QRCodeBuilder {
   }
 
   get moduleCount() {
-    return this.modules ? this.modules.length : 0;
+    return 4 * this.version + 17;
   }
 
   addData(data: string) {
@@ -44,7 +44,8 @@ export class QRCodeBuilder {
     ) {
       throw new Error(`${row},${col}`);
     }
-    return (this.modules[row] ?? [])[col] ?? false;
+    const key = (row << 16) | col;
+    return this.modules.get(key) === true;
   }
 
   isPatternModule(row: number, col: number) {
@@ -93,11 +94,7 @@ export class QRCodeBuilder {
     if (this.version <= 0) {
       throw new Error(`Invalid version:${this.version}`);
     }
-    const moduleCount = this.version * 4 + 17;
-    this.modules = [];
-    for (let row = 0; row < moduleCount; row++) {
-      this.modules.push(new Array(moduleCount).fill(null));
-    }
+    this.modules.clear();
   }
 
   private makeImpl(test: boolean, maskPattern: number) {
@@ -125,8 +122,9 @@ export class QRCodeBuilder {
 
     return {
       size: this.moduleCount,
-      isDark: this.isDark,
-      isPatternModule: this.isPatternModule,
+      isDark: (row: number, col: number) => this.isDark(row, col),
+      isPatternModule: (row: number, col: number) =>
+        this.isPatternModule(row, col),
     };
   }
 
@@ -181,13 +179,21 @@ export class QRCodeBuilder {
   }
 
   private setModule(row: number, col: number, value: boolean) {
-    const moduleRow = this.modules[row] ?? [];
-    moduleRow[col] = value;
+    const key = (row << 16) | col;
+    this.modules.set(key, value);
   }
 
   private moduleIsUnset(row: number, col: number): boolean {
-    const moduleRow = this.modules[row];
-    return moduleRow === undefined ? false : moduleRow[col] === null;
+    if (
+      row < 0 ||
+      col < 0 ||
+      row >= this.moduleCount ||
+      col >= this.moduleCount
+    ) {
+      throw new Error(`${row},${col}`);
+    }
+    const key = (row << 16) | col;
+    return !this.modules.has(key);
   }
 
   private setupPositionAdjustPattern() {
@@ -206,12 +212,10 @@ export class QRCodeBuilder {
         }
 
         for (let r = -2; r <= 2; r++) {
+          const r2 = r * r;
           for (let c = -2; c <= 2; c++) {
-            if (r == -2 || r == 2 || c == -2 || c == 2 || (r == 0 && c == 0)) {
-              this.setModule(row + r, col + c, true);
-            } else {
-              this.setModule(row + r, col + c, false);
-            }
+            const c2 = c * c;
+            this.setModule(row + r, col + c, (r2 + c2 + 1) >> 1 != 1);
           }
         }
       }
@@ -224,7 +228,7 @@ export class QRCodeBuilder {
     for (let i = 0; i < 18; i++) {
       const mod = !test && ((bits >> i) & 1) == 1;
       this.setModule(
-        Math.floor(i / 3),
+        Math.trunc(i / 3),
         (i % 3) + this.moduleCount - 8 - 3,
         mod
       );
@@ -234,7 +238,7 @@ export class QRCodeBuilder {
       const mod = !test && ((bits >> i) & 1) == 1;
       this.setModule(
         (i % 3) + this.moduleCount - 8 - 3,
-        Math.floor(i / 3),
+        Math.trunc(i / 3),
         mod
       );
     }
@@ -288,7 +292,7 @@ export class QRCodeBuilder {
           if (this.moduleIsUnset(row, col - c)) {
             let dark =
               byteIndex < data.length &&
-              ((data[byteIndex] ?? 0 >>> bitIndex) & 1) === 1;
+              (((data[byteIndex] ?? 0) >>> bitIndex) & 1) === 1;
 
             const mask = getMask(maskPattern, row, col - c);
 
@@ -299,7 +303,7 @@ export class QRCodeBuilder {
             this.setModule(row, col - c, dark);
             bitIndex--;
 
-            if (bitIndex == -1) {
+            if (bitIndex < 0) {
               byteIndex++;
               bitIndex = 7;
             }

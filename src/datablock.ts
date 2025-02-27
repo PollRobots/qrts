@@ -15,7 +15,7 @@ export class DataBlock {
     if (isAlphaNumString(data)) {
       this.mode = Mode.MODE_ALPHA_NUM;
       this.data = new Uint8Array(
-        Array.from(data).map((ch) => ALPHA_NUM_CHARACTER_ENCODING.get(ch) || 0)
+        Array.from(data).map((ch) => ALPHA_NUM_CHARACTER_ENCODING.get(ch) ?? 0)
       );
     } else {
       const utf8 = new TextEncoder().encode(data);
