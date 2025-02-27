@@ -1,7 +1,7 @@
 {
   "name": "qrts",
   "type": "module",
-  "source": "src/qrts.ts",
+  "source": "src/index.ts",
   "exports": {
     "require": "./dist/qrts.cjs",
     "default": "./dist/qrts.modern.js"
@@ -9,17 +9,40 @@
   "main": "./dist/qrts.cjs",
   "module": "./dist/qrts.module.js",
   "unpkg": "./dist/qrts.umd.js",
+  "types": "./dist/index.d.ts",
   "version": "1.0.0",
-  "description": "",
+  "description": "A pure typescript library to generate QR Codes",
   "scripts": {
-    "build": "microbundle",
-    "dev": "microbundle watch"
+    "clean": "rm -rf dist",
+    "build": "npm run clean && npm run lint && microbundle",
+    "dev": "microbundle watch",
+    "lint": "eslint .",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "Paul C Roberts",
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "LICENSE-qrcode",
+    "LICENSE-qrjs",
+    "README.md"
+  ],
+  "keywords": [
+    "qrcode",
+    "qr"
+  ],
+  "author": "Paul C Roberts <pacaro@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pollrobots/qrts.git"
+  },
+  "homepage": "https://github.com/pollrobots/qrts.git",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
     "microbundle": "^0.15.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.25.0"
   }
 }

@@ -1,10 +1,10 @@
 // ErrorCorrectLevel
-var ECL = require("./ErrorCorrectLevel");
+import { ErrorCorrectLevel } from "./definitions";
 
-export type QRRSBlock = {
+export interface QRRSBlock {
   totalCount: number;
   dataCount: number;
-};
+}
 
 const RS_BLOCK_TABLE: number[][] = [
   // L
@@ -254,51 +254,44 @@ const RS_BLOCK_TABLE: number[][] = [
 ];
 
 export function getRSBlocks(
-  typeNumber: number,
-  errorCorrectLevel: 0 | 1 | 2 | 3
+  version: number,
+  errorCorrectLevel: ErrorCorrectLevel
 ) {
-  const rsBlock = getRsBlockTable(typeNumber, errorCorrectLevel);
+  const rsBlock = getRsBlockTable(version, errorCorrectLevel);
 
-  if (rsBlock == undefined) {
+  if (rsBlock === undefined) {
     throw new Error(
-      "bad rs block @ typeNumber:" +
-        typeNumber +
-        "/errorCorrectLevel:" +
-        errorCorrectLevel
+      `bad rs block @ version:${version}/errorCorrectLevel:${errorCorrectLevel}`
     );
   }
 
-  const length = rsBlock.length / 3;
+  const rsBlocks: QRRSBlock[] = [];
 
-  const list: QRRSBlock[] = [];
-
-  for (let i = 0; i < length; i++) {
-    const count = rsBlock[i * 3 + 0];
-    const totalCount = rsBlock[i * 3 + 1];
-    const dataCount = rsBlock[i * 3 + 2];
+  for (let i = 0; i < rsBlock.length; i += 3) {
+    const count = rsBlock[i + 0] ?? 0;
+    const totalCount = rsBlock[i + 1] ?? 0;
+    const dataCount = rsBlock[i + 2] ?? 0;
 
     for (let j = 0; j < count; j++) {
-      list.push({ totalCount, dataCount });
+      rsBlocks.push({ totalCount, dataCount });
     }
   }
 
-  return list;
+  return rsBlocks;
 }
 
 export function getRsBlockTable(
-  typeNumber: number,
-  errorCorrectLevel: 0 | 1 | 2 | 3
+  version: number,
+  errorCorrectLevel: ErrorCorrectLevel
 ) {
   switch (errorCorrectLevel) {
-    case ECL.L:
-      return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
-    case ECL.M:
-      return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
-    case ECL.Q:
-      return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
-    case ECL.H:
-      return RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
-    default:
-      return undefined;
+    case ErrorCorrectLevel.Low:
+      return RS_BLOCK_TABLE[(version - 1) * 4 + 0];
+    case ErrorCorrectLevel.Medium:
+      return RS_BLOCK_TABLE[(version - 1) * 4 + 1];
+    case ErrorCorrectLevel.Quartile:
+      return RS_BLOCK_TABLE[(version - 1) * 4 + 2];
+    case ErrorCorrectLevel.High:
+      return RS_BLOCK_TABLE[(version - 1) * 4 + 3];
   }
 }

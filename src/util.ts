@@ -1,7 +1,7 @@
-import { Mode } from "./mode";
-import { QRPolynomial as Polynomial } from "./Polynomial";
-import { glog, gexp } from "./math";
-import { QRCode } from "./QRCode";
+import { Mode } from "./definitions";
+import { Polynomial as Polynomial } from "./polynomial";
+import { gexp } from "./math";
+import { QRCodeBuilder } from "./qrcodebuilder";
 
 const QRMaskPattern = {
   PATTERN000: 0,
@@ -57,18 +57,9 @@ const PATTERN_POSITION_TABLE = [
   [6, 30, 58, 86, 114, 142, 170],
 ];
 
-const G15 =
-  (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0);
-const G18 =
-  (1 << 12) |
-  (1 << 11) |
-  (1 << 10) |
-  (1 << 9) |
-  (1 << 8) |
-  (1 << 5) |
-  (1 << 2) |
-  (1 << 0);
-const G15_MASK = (1 << 14) | (1 << 12) | (1 << 10) | (1 << 4) | (1 << 1);
+const G15 = 0b101_0011_0111;
+const G18 = 0b1_1111_0010_0101;
+const G15_MASK = 0b101_0100_0001_0010;
 
 export function getBCHTypeInfo(data: number) {
   let d = data << 10;
@@ -78,7 +69,7 @@ export function getBCHTypeInfo(data: number) {
   return ((data << 10) | d) ^ G15_MASK;
 }
 
-export function getBCHTypeNumber(data: number) {
+export function getBCHVersion(data: number) {
   let d = data << 12;
   while (getBCHDigit(d) - getBCHDigit(G18) >= 0) {
     d ^= G18 << (getBCHDigit(d) - getBCHDigit(G18));
@@ -97,8 +88,11 @@ export function getBCHDigit(data: number) {
   return digit;
 }
 
-export function getPatternPosition(typeNumber: number) {
-  return PATTERN_POSITION_TABLE[typeNumber - 1];
+export function getPatternPosition(typeNumber: number): number[] {
+  if (typeNumber <= 0 || typeNumber > PATTERN_POSITION_TABLE.length) {
+    throw new Error(`Invalid type number: ${typeNumber}`);
+  }
+  return PATTERN_POSITION_TABLE[typeNumber - 1] ?? [];
 }
 
 export function getMask(maskPattern: number, i: number, j: number) {
@@ -149,7 +143,7 @@ export function getLengthInBits(mode: number, type: number) {
       case Mode.MODE_KANJI:
         return 8;
       default:
-        throw new Error("mode:" + mode);
+        throw new Error(`mode:${mode}`);
     }
   } else if (type < 27) {
     // 10 - 26
@@ -164,7 +158,7 @@ export function getLengthInBits(mode: number, type: number) {
       case Mode.MODE_KANJI:
         return 10;
       default:
-        throw new Error("mode:" + mode);
+        throw new Error(`mode:${mode}`);
     }
   } else if (type < 41) {
     // 27 - 40
@@ -179,15 +173,15 @@ export function getLengthInBits(mode: number, type: number) {
       case Mode.MODE_KANJI:
         return 12;
       default:
-        throw new Error("mode:" + mode);
+        throw new Error(`mode:${mode}`);
     }
   } else {
-    throw new Error("type:" + type);
+    throw new Error(`type:${type}`);
   }
 }
 
-export function getLostPoint(qrCode: QRCode) {
-  const moduleCount = qrCode.getModuleCount();
+export function getLostPoint(qrCode: QRCodeBuilder) {
+  const moduleCount = qrCode.moduleCount;
 
   let lostPoint = 0;
 
