@@ -50,6 +50,10 @@ interface QRCode {
 - **isDark** Indicates whether a specific module is dark.
 - **isPatternModule** Indicates whether a specific module is one of the corner blocks used by readers to locate and orient the QR Code
 
+# Demo
+
+You can see the code in action at https://pollrobots.com/qrts.html
+
 # Credits
 
 This library is a fork of the [qr.js](https://npmjs.org/package/qr.js) package which appears to have been orphaned. See [LICENSE-qrjs](./LICENSE-qrjs) for the license from that project.
