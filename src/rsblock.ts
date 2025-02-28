@@ -4,6 +4,7 @@ import { ErrorCorrectLevel } from "./definitions";
 export interface QRRSBlock {
   totalCount: number;
   dataCount: number;
+  ecCount: number;
 }
 
 interface RSBlock {
@@ -699,8 +700,13 @@ export function getRSBlocks(
   const rsBlocks: QRRSBlock[] = [];
 
   for (const block of blocks) {
+    const rsBlock = {
+      totalCount: block.tc,
+      dataCount: block.dc,
+      ecCount: block.tc - block.dc,
+    };
     for (let i = 0; i < block.c; i++) {
-      rsBlocks.push({ totalCount: block.tc, dataCount: block.dc });
+      rsBlocks.push(rsBlock);
     }
   }
 

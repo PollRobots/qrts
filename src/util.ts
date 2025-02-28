@@ -121,13 +121,21 @@ export function getMask(maskPattern: number, i: number, j: number) {
   }
 }
 
-export function getErrorCorrectPolynomial(errorCorrectLength: 0 | 1 | 2 | 3) {
+const memoErrorCorrectPolynomials = new Map<number, Polynomial>();
+
+export function getErrorCorrectPolynomial(errorCorrectLength: number) {
+  const existing = memoErrorCorrectPolynomials.get(errorCorrectLength);
+  if (existing !== undefined) {
+    return existing;
+  }
+
   let a = new Polynomial([1], 0);
 
   for (let i = 0; i < errorCorrectLength; i++) {
     a = a.multiply(new Polynomial([1, gexp(i)], 0));
   }
 
+  memoErrorCorrectPolynomials.set(errorCorrectLength, a);
   return a;
 }
 

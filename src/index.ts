@@ -24,8 +24,17 @@ const DEFAULT_OPTIONS: GenerateOptions = {
 export interface QRCode {
   /** The width and height of the QR code */
   size: number;
-  /** Indicates whether the specified module is dark */
+  /**
+   * Indicates whether the specified module is dark.
+   *
+   * If either {@link row} or {@link col} is out of bounds this will throw an exception.
+   */
   isDark: (row: number, col: number) => boolean;
+  /** Indicates whether the specified module is dark.
+   *
+   * If either {@link row} or {@link col} is out of bounds this will return false.
+   */
+  isDarkSafe: (row: number, col: number) => boolean;
   /** Indicates whether the specified module is one of the patterns used to located the code */
   isPatternModule: (row: number, col: number) => boolean;
 }

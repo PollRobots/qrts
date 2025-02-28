@@ -48,13 +48,47 @@ export class QRCodeBuilder {
     return this.modules.get(key) === true;
   }
 
-  isPatternModule(row: number, col: number) {
+  isDarkSafe(row: number, col: number): boolean {
+    if (
+      row < 0 ||
+      this.moduleCount <= row ||
+      col < 0 ||
+      this.moduleCount <= col
+    ) {
+      return false;
+    }
+    const key = (row << 16) | col;
+    return this.modules.get(key) === true;
+  }
+
+  private isPositionProbeModule(row: number, col: number) {
     if (row < 7) {
       if (col < 7 || col >= this.moduleCount - 7) {
         return true;
       }
     } else if (row >= this.moduleCount - 7 && col < 7) {
       return true;
+    }
+    return false;
+  }
+
+  isPatternModule(row: number, col: number) {
+    if (this.isPositionProbeModule(row, col)) {
+      return true;
+    }
+
+    const patternPositions = getPatternPosition(this.version);
+    for (const pattern_row of patternPositions) {
+      if (Math.abs(row - pattern_row) <= 2) {
+        for (const pattern_col of patternPositions) {
+          if (
+            !this.isPositionProbeModule(pattern_row, pattern_col) &&
+            Math.abs(col - pattern_col) <= 2
+          ) {
+            return true;
+          }
+        }
+      }
     }
     return false;
   }
@@ -90,15 +124,15 @@ export class QRCodeBuilder {
     return this.makeImpl(false, this.getBestMaskPattern());
   }
 
-  private setupModules() {
-    if (this.version <= 0) {
-      throw new Error(`Invalid version:${this.version}`);
-    }
+  private clearModules() {
     this.modules.clear();
   }
 
   private makeImpl(test: boolean, maskPattern: number) {
-    this.setupModules();
+    if (this.version <= 0) {
+      throw new Error(`Invalid version:${this.version}`);
+    }
+    this.clearModules();
     this.setupPositionProbePattern(0, 0);
     this.setupPositionProbePattern(this.moduleCount - 7, 0);
     this.setupPositionProbePattern(0, this.moduleCount - 7);
@@ -123,6 +157,7 @@ export class QRCodeBuilder {
     return {
       size: this.moduleCount,
       isDark: (row: number, col: number) => this.isDark(row, col),
+      isDarkSafe: (row: number, col: number) => this.isDarkSafe(row, col),
       isPatternModule: (row: number, col: number) =>
         this.isPatternModule(row, col),
     };
@@ -147,7 +182,7 @@ export class QRCodeBuilder {
   }
 
   private getBestMaskPattern() {
-    let minLostPoint = 0;
+    let minLostPoint = Infinity;
     let pattern = 0;
 
     for (let i = 0; i < 8; i++) {
@@ -155,7 +190,7 @@ export class QRCodeBuilder {
 
       const lostPoint = getLostPoint(this);
 
-      if (i == 0 || minLostPoint > lostPoint) {
+      if (minLostPoint > lostPoint) {
         minLostPoint = lostPoint;
         pattern = i;
       }
@@ -381,18 +416,20 @@ function createData(
 function createBytes(buffer: BitBuffer, rsBlocks: QRRSBlock[]): number[] {
   let offset = 0;
 
-  let maxDcCount = 0;
-  let maxEcCount = 0;
+  const { maxDcCount, maxEcCount } = rsBlocks.reduce(
+    (accum, rsBlock) => ({
+      maxDcCount: Math.max(accum.maxDcCount, rsBlock.dataCount),
+      maxEcCount: Math.max(accum.maxEcCount, rsBlock.ecCount),
+    }),
+    { maxDcCount: 0, maxEcCount: 0 }
+  );
 
   const dcdata: number[][] = [];
   const ecdata: number[][] = [];
 
   for (const rsBlock of rsBlocks) {
     const dcCount = rsBlock.dataCount;
-    const ecCount = rsBlock.totalCount - dcCount;
-
-    maxDcCount = Math.max(maxDcCount, dcCount);
-    maxEcCount = Math.max(maxEcCount, ecCount);
+    const ecCount = rsBlock.ecCount;
 
     const dc: number[] = [];
     for (let i = 0; i < dcCount; i++) {
@@ -401,7 +438,7 @@ function createBytes(buffer: BitBuffer, rsBlocks: QRRSBlock[]): number[] {
     dcdata.push(dc);
     offset += dcCount;
 
-    const rsPoly = getErrorCorrectPolynomial(ecCount as 0 | 1 | 2 | 3);
+    const rsPoly = getErrorCorrectPolynomial(ecCount);
     const rawPoly = new Polynomial(dc, rsPoly.length - 1);
 
     const modPoly = rawPoly.mod(rsPoly);
