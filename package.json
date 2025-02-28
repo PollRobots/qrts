@@ -1,5 +1,5 @@
 {
-  "name": "qrts",
+  "name": "@pollrobots/qrts",
   "type": "module",
   "source": "src/index.ts",
   "exports": {
@@ -10,7 +10,7 @@
   "module": "./dist/qrts.module.js",
   "unpkg": "./dist/qrts.umd.js",
   "types": "./dist/index.d.ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A pure typescript library to generate QR Codes",
   "scripts": {
     "clean": "rm -rf dist",

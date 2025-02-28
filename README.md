@@ -2,6 +2,8 @@
 
 QR Code&trade; encoding in TypeScript with no additional dependencies.
 
+[![npm version](https://badge.fury.io/js/@pollrobots%2Fqrts.svg)](https://npmjs.com/package/@pollrobots/qrts)
+
 ```typescript
 import { generate } from "qrts";
 
@@ -32,7 +34,7 @@ generate(data: string|string[], options?: Partial<GenerateOptions>): QRCode
   }
   ```
   - **version** a number between 1 and 40 that specifies how large the QR Code should be. The size of the generated code will be 4 × version + 17. If this is not specified, or set to `-1`, then the smallest size capable of containing the data will be used.
-  - **errorCorretionLevel** &mdash; This is one of `Low`, `Medium`, `Quartile`, or `High`, representing increasing levels of redundancy in the QR Code. This will default to `High`.
+  - **errorCorrectionLevel** &mdash; This is one of `Low`, `Medium`, `Quartile`, or `High`, representing increasing levels of redundancy in the QR Code. This will default to `High`.
 
 ### returns
 
